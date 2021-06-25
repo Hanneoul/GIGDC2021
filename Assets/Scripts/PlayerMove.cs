@@ -90,7 +90,6 @@ public class PlayerMove : MonoBehaviour
             else if (Input.GetKeyUp(KeyCode.LeftArrow))
             {
                 L_stop = true;
-                Debug.Log("jfksl");
             }
 
             if (R_stop)
