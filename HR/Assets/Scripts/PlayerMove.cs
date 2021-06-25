@@ -6,15 +6,17 @@ using UnityEngine.SceneManagement;
 public class PlayerMove : MonoBehaviour
 {
 
-
     public AudioClip audioJump;
     public AudioClip audioClear;
     public AudioClip audioDie;
 
     AudioSource audioSou;
 
-    public float maxSpeed;
+    float maxSpeed;
     public float jumpPower;
+    public float moveSpeed;
+    public float acceleration;
+
 
     Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
@@ -22,8 +24,9 @@ public class PlayerMove : MonoBehaviour
     Animator anime;
 
     bool JumpYN = false;
+    bool R_stop = false;
+    bool L_stop = false;
     int Jumpint = 0;
-
 
     void Awake()
     {
@@ -36,53 +39,84 @@ public class PlayerMove : MonoBehaviour
     {
 
         //점프
-        if (Input.GetButtonDown("Jump") && JumpYN == false)
+        if (Input.GetKeyDown(KeyCode.Space) && JumpYN == false)
         {
-            //normalized벡터크기를 1로 만든 상태 단위 벡터
-            //rigid.velocity = new Vector2(0,0);
-            rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
-            anime.SetBool("isJumping", true);
-            audioSou.clip = audioJump;
-            audioSou.Play();
-            Jumpint++;
-            if (Jumpint >= 2)
-            {
-                JumpYN = true;
-            }
+             //normalized벡터크기를 1로 만든 상태 단위 벡터
+             //rigid.velocity = new Vector2(0,0);
+             rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+             anime.SetBool("isJumping", true);
+             audioSou.clip = audioJump;
+             audioSou.Play();
+             Jumpint++;
+             if (Jumpint >= 2 )
+             {
+                 JumpYN = true;
+               
+             }
         }
-        //스피드 제어
-        if (Input.GetButtonUp("Horizontal"))
-        {
-            //normalized벡터크기를 1로 만든 상태 단위 벡터
-            rigid.velocity = new Vector2(rigid.velocity.normalized.x * 0.5f, rigid.velocity.y);
-        }
+
+
         //방향전환
         if (Input.GetButton("Horizontal"))
             spriteRenderer.flipX = Input.GetAxisRaw("Horizontal") == -1;
        
-        
-        //Animation
-        if(Mathf.Abs(rigid.velocity.x) <0.3)
+
+        //캐릭터 이동
+        if(Input.GetKey(KeyCode.RightArrow))
         {
-            anime.SetBool("isWalking", false);          
+            transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
+            anime.SetBool("isWalking", true);
+        }
+        else if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            transform.Translate(Vector3.left * moveSpeed * Time.deltaTime);
+            anime.SetBool("isWalking", true);
         }
         else
-            anime.SetBool("isWalking", true);
+        {
+            anime.SetBool("isWalking", false);
+        }
+
+        if(Input.GetKeyUp(KeyCode.RightArrow))
+        {
+            R_stop = true;
+        }
+        else if(Input.GetKeyUp(KeyCode.LeftArrow))
+        {
+            L_stop = true;
+            Debug.Log("jfksl");
+        }
+
+        if(R_stop)
+        {
+            moveSpeed -= acceleration * Time.deltaTime;
+            transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
+            if (moveSpeed <= 0.5)
+            {
+                R_stop = false;
+                moveSpeed = 0;
+            }
+        }
+        else if (L_stop)
+        {
+            moveSpeed -= acceleration * Time.deltaTime;
+            transform.Translate(Vector3.left * moveSpeed * Time.deltaTime);
+            if (moveSpeed <= 0.5)
+            {
+                L_stop = false;
+                moveSpeed = 0;
+            }
+
+        }
+        else
+        {
+            moveSpeed = 5;
+        }
+
     }
 
     void FixedUpdate()
     {
-        //캐릭 움직임 속도
-        float h = Input.GetAxisRaw("Horizontal");
-
-        rigid.AddForce(Vector2.right * h, ForceMode2D.Impulse);
-        //최대 속도
-        if (rigid.velocity.x > maxSpeed)    // 오른쪽 속도 제어
-            rigid.velocity = new Vector2(maxSpeed, rigid.velocity.y);
-        else if (rigid.velocity.x < maxSpeed*(-1))    // 왼쪽 속도 제어
-            rigid.velocity = new Vector2(maxSpeed * (-1), rigid.velocity.y);
-
-
         //바닥체크
         /*
         if(rigid.velocity.y <0)
@@ -121,28 +155,17 @@ public class PlayerMove : MonoBehaviour
             Invoke("ChangeSc", 2f);
 
         }
-        /*if (collision.gameObject.tag == "Platform")// 바닥초기화
+        if (collision.gameObject.tag == "Platform")// 바닥초기화
         {
             Debug.Log("땅");
             anime.SetBool("isJumping", false);
             JumpYN = false;
             Jumpint = 0;
-        }*/
+        }
 
     }
     public void ChangeSc()
     {
         SceneManager.LoadScene("Finsh");
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if(collision.CompareTag("Platform"))
-        {
-            Debug.Log("점프 초기화 : 땅을 밟음");
-            anime.SetBool("isJumping", false);
-            JumpYN = false;
-            Jumpint = 0;
-        }
     }
 }
