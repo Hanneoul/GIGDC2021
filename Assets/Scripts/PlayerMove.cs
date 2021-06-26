@@ -21,9 +21,11 @@ public class PlayerMove : MonoBehaviour
 
     Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
+    CapsuleCollider2D capsule;
    
     Animator anime;
 
+    bool live = true;
     bool JumpYN = false;
     bool R_stop = false;
     bool L_stop = false;
@@ -35,104 +37,84 @@ public class PlayerMove : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         anime = GetComponent<Animator>();
         audioSou = GetComponent<AudioSource>();
+        capsule = GetComponent<CapsuleCollider2D>();
     }
      void Update()
     {
-
-        //점프
-        if (Input.GetKeyDown(KeyCode.Space) && JumpYN == false)
+        if (live)
         {
-             //normalized벡터크기를 1로 만든 상태 단위 벡터
-             //rigid.velocity = new Vector2(0,0);
-             rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
-             anime.SetBool("isJumping", true);
-             audioSou.clip = audioJump;
-             audioSou.Play();
-             Jumpint++;
-             if (Jumpint >= 2 )
-             {
-                 JumpYN = true;
-               
-             }
-        }
-
-
-        //방향전환
-        if (Input.GetButton("Horizontal"))
-            spriteRenderer.flipX = Input.GetAxisRaw("Horizontal") == -1;
-       
-
-        //캐릭터 이동
-        if(Input.GetKey(KeyCode.RightArrow))
-        {
-            transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
-            anime.SetBool("isWalking", true);
-        }
-        else if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            transform.Translate(Vector3.left * moveSpeed * Time.deltaTime);
-            anime.SetBool("isWalking", true);
-        }
-        else
-        {
-            anime.SetBool("isWalking", false);
-        }
-
-        if(Input.GetKeyUp(KeyCode.RightArrow))
-        {
-            R_stop = true;
-        }
-        else if(Input.GetKeyUp(KeyCode.LeftArrow))
-        {
-            L_stop = true;
-        }
-
-        if(R_stop)
-        {
-            moveSpeed -= acceleration * Time.deltaTime;
-            transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
-            if (moveSpeed <= 0.5)
+            //점프
+            if (Input.GetKeyDown(KeyCode.Space) && JumpYN == false)
             {
-                R_stop = false;
-                moveSpeed = 0;
-            }
-        }
-        else if (L_stop)
-        {
-            moveSpeed -= acceleration * Time.deltaTime;
-            transform.Translate(Vector3.left * moveSpeed * Time.deltaTime);
-            if (moveSpeed <= 0.5)
-            {
-                L_stop = false;
-                moveSpeed = 0;
+                //normalized벡터크기를 1로 만든 상태 단위 벡터
+                //rigid.velocity = new Vector2(0,0);
+                rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+                anime.SetBool("isJumping", true);
+                audioSou.clip = audioJump;
+                audioSou.Play();
+                Jumpint++;
+                if (Jumpint >= 2)
+                {
+                    JumpYN = true;
+
+                }
             }
 
-        }
-        else
-        {
-            moveSpeed = 5;
-        }
+            //방향전환
+            if (Input.GetButton("Horizontal"))
+                spriteRenderer.flipX = Input.GetAxisRaw("Horizontal") == -1;
 
-    }
-
-    void FixedUpdate()
-    {
-        //바닥체크
-        /*
-        if(rigid.velocity.y <0)
-        {
-            Debug.DrawRay(rigid.position, Vector3.down, Color.green);
-
-            RaycastHit2D rayHit = Physics2D.Raycast(rigid.position, Vector3.down, 2, LayerMask.GetMask("Platform"));
-            if (rayHit.collider != null)
+            //캐릭터 이동
+            if (Input.GetKey(KeyCode.RightArrow))
             {
-                if (rayHit.distance < 2.8f);
-                anime.SetBool("isJumping", false);
-                JumpYN = false;
-                Jumpint = 0;
+                transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
+                anime.SetBool("isWalking", true);
+            }
+            else if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                transform.Translate(Vector3.left * moveSpeed * Time.deltaTime);
+                anime.SetBool("isWalking", true);
+            }
+            else
+            {
+                anime.SetBool("isWalking", false);
+            }
+
+            if (Input.GetKeyUp(KeyCode.RightArrow))
+            {
+                R_stop = true;
+            }
+            else if (Input.GetKeyUp(KeyCode.LeftArrow))
+            {
+                L_stop = true;
+            }
+
+            if (R_stop)
+            {
+                moveSpeed -= acceleration * Time.deltaTime;
+                transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
+                if (moveSpeed <= 0.5)
+                {
+                    R_stop = false;
+                    moveSpeed = 0;
+                }
+            }
+            else if (L_stop)
+            {
+                moveSpeed -= acceleration * Time.deltaTime;
+                transform.Translate(Vector3.left * moveSpeed * Time.deltaTime);
+                if (moveSpeed <= 0.5)
+                {
+                    L_stop = false;
+                    moveSpeed = 0;
+                }
+
+            }
+            else
+            {
+                moveSpeed = 5;
             }
         }
-        */
     }
 
      void OnCollisionEnter2D(Collision2D collision)
@@ -144,8 +126,11 @@ public class PlayerMove : MonoBehaviour
             Debug.Log("플레이어:  아얏!");
             audioSou.clip = audioDie;
             audioSou.Play();
-
-            transform.position = new Vector3(0, 0, -1);
+            anime.SetBool("isDie", true);
+            capsule.enabled = false;
+            rigid.gravityScale = 0;
+            live = false;
+            Invoke("Die", 1.5f);
         }
         if (collision.gameObject.tag == "Finish")// 피니쉬
         {
@@ -189,5 +174,23 @@ public class PlayerMove : MonoBehaviour
     public void ChangeSc()
     {
         SceneManager.LoadScene("Finsh");
+    }
+
+    public void Die()
+    {
+        live = true;
+        anime.SetBool("isDie", false);
+        SceneManager.LoadScene("SampleScene");
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Platform"))
+        {
+            Debug.Log("점프 초기화 : 땅을 밟음");
+            anime.SetBool("isJumping", false);
+            JumpYN = false;
+            Jumpint = 0;
+        }
     }
 }
