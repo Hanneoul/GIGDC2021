@@ -2138,5 +2138,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: DetectionObstacle
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5577643375288530514, guid: 84dbba39c61cfe348b477d0249a9cee0, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 84dbba39c61cfe348b477d0249a9cee0, type: 3}
