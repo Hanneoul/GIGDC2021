@@ -6,44 +6,45 @@ using UnityEngine.SceneManagement;
 public class PlayerMove : MonoBehaviour
 {
 
-
     public AudioClip audioJump;
     public AudioClip audioClear;
     public AudioClip audioDie;
 
-    CapsuleCollider2D capsule;
     AudioSource audioSou;
-    Rigidbody2D rigid;
-    SpriteRenderer spriteRenderer;
-   
-    Animator anime;
 
-    public float maxSpeed;
+    float maxSpeed;
     public float jumpPower;
     public float moveSpeed;
     public float acceleration;
+    public float slidePower;
+
+
+    Rigidbody2D rigid;
+    SpriteRenderer spriteRenderer;
+    CapsuleCollider2D capsule;
+   
+    Animator anime;
 
     bool live = true;
     bool JumpYN = false;
     bool R_stop = false;
     bool L_stop = false;
-
     int Jumpint = 0;
 
     void Awake()
     {
-        capsule = GetComponent<CapsuleCollider2D>();
         rigid = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         anime = GetComponent<Animator>();
         audioSou = GetComponent<AudioSource>();
+        capsule = GetComponent<CapsuleCollider2D>();
     }
      void Update()
     {
         if (live)
         {
             //점프
-            if (Input.GetButtonDown("Jump") && JumpYN == false)
+            if (Input.GetKeyDown(KeyCode.Space) && JumpYN == false)
             {
                 //normalized벡터크기를 1로 만든 상태 단위 벡터
                 //rigid.velocity = new Vector2(0,0);
@@ -55,14 +56,10 @@ public class PlayerMove : MonoBehaviour
                 if (Jumpint >= 2)
                 {
                     JumpYN = true;
+
                 }
             }
-            //스피드 제어
-            if (Input.GetButtonUp("Horizontal"))
-            {
-                //normalized벡터크기를 1로 만든 상태 단위 벡터
-                rigid.velocity = new Vector2(rigid.velocity.normalized.x * 0.5f, rigid.velocity.y);
-            }
+
             //방향전환
             if (Input.GetButton("Horizontal"))
                 spriteRenderer.flipX = Input.GetAxisRaw("Horizontal") == -1;
@@ -117,42 +114,6 @@ public class PlayerMove : MonoBehaviour
             {
                 moveSpeed = 5;
             }
-
-
-        }
-    }
-
-    void FixedUpdate()
-    {
-        if (live)
-        {
-            //캐릭 움직임 속도
-            float h = Input.GetAxisRaw("Horizontal");
-
-            rigid.AddForce(Vector2.right * h, ForceMode2D.Impulse);
-            //최대 속도
-            if (rigid.velocity.x > maxSpeed)    // 오른쪽 속도 제어
-                rigid.velocity = new Vector2(maxSpeed, rigid.velocity.y);
-            else if (rigid.velocity.x < maxSpeed * (-1))    // 왼쪽 속도 제어
-                rigid.velocity = new Vector2(maxSpeed * (-1), rigid.velocity.y);
-
-
-            //바닥체크
-            /*
-            if(rigid.velocity.y <0)
-            {
-                Debug.DrawRay(rigid.position, Vector3.down, Color.green);
-
-                RaycastHit2D rayHit = Physics2D.Raycast(rigid.position, Vector3.down, 2, LayerMask.GetMask("Platform"));
-                if (rayHit.collider != null)
-                {
-                    if (rayHit.distance < 2.8f);
-                    anime.SetBool("isJumping", false);
-                    JumpYN = false;
-                    Jumpint = 0;
-                }
-            }
-            */
         }
     }
 
@@ -160,7 +121,7 @@ public class PlayerMove : MonoBehaviour
     {
 
 
-     if(collision.gameObject.tag == "Enemy")// 적 
+        if(collision.gameObject.tag == "Enemy")// 적 
         {
             Debug.Log("플레이어:  아얏!");
             audioSou.clip = audioDie;
@@ -170,9 +131,8 @@ public class PlayerMove : MonoBehaviour
             rigid.gravityScale = 0;
             live = false;
             Invoke("Die", 1.5f);
-
         }
-     if (collision.gameObject.tag == "Finish")// 피니쉬
+        if (collision.gameObject.tag == "Finish")// 피니쉬
         {
             Debug.Log("피니쉬");
             audioSou.clip = audioClear;
@@ -180,13 +140,35 @@ public class PlayerMove : MonoBehaviour
             Invoke("ChangeSc", 2f);
 
         }
-        /*if (collision.gameObject.tag == "Platform")// 바닥초기화
+        if (collision.gameObject.tag == "Platform")// 바닥초기화
         {
             Debug.Log("땅");
             anime.SetBool("isJumping", false);
             JumpYN = false;
             Jumpint = 0;
-        }*/
+        }
+        if(collision.gameObject.tag=="IceBlock") //미끄러지기 MovePower보다 적게주면 더 미끄러짐
+        {
+            Debug.Log("아이스블럭");
+            if (Input.GetKeyUp(KeyCode.RightArrow))
+            {
+                moveSpeed -= slidePower * Time.deltaTime;
+                transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
+                if (moveSpeed <= 0.5)
+                {
+                    moveSpeed = 0;
+                }
+            }
+            else if (Input.GetKeyUp(KeyCode.LeftArrow))
+            {
+                moveSpeed -= slidePower * Time.deltaTime;
+                transform.Translate(Vector3.left * moveSpeed * Time.deltaTime);
+                if (moveSpeed <= 0.5)
+                {
+                    moveSpeed = 0;
+                }
+            }
+        }    
 
     }
     public void ChangeSc()
@@ -203,7 +185,7 @@ public class PlayerMove : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.CompareTag("Platform"))
+        if (collision.CompareTag("Platform"))
         {
             Debug.Log("점프 초기화 : 땅을 밟음");
             anime.SetBool("isJumping", false);
