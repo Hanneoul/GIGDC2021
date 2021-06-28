@@ -27,6 +27,8 @@ public class PlayerMove : MonoBehaviour
 
     bool live = true;
     bool JumpYN = false;
+    bool movingL = false;
+    bool movingR = false;
     bool R_stop = false;
     bool L_stop = false;
     int Jumpint = 0;
@@ -65,13 +67,15 @@ public class PlayerMove : MonoBehaviour
                 spriteRenderer.flipX = Input.GetAxisRaw("Horizontal") == -1;
 
             //캐릭터 이동
-            if (Input.GetKey(KeyCode.RightArrow))
+            if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
             {
+                movingR = true;
                 transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
                 anime.SetBool("isWalking", true);
             }
-            else if (Input.GetKey(KeyCode.LeftArrow))
+            else if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
             {
+                movingL = true;
                 transform.Translate(Vector3.left * moveSpeed * Time.deltaTime);
                 anime.SetBool("isWalking", true);
             }
@@ -82,17 +86,25 @@ public class PlayerMove : MonoBehaviour
 
             if (Input.GetKeyUp(KeyCode.RightArrow))
             {
+                L_stop = false;
                 R_stop = true;
             }
             else if (Input.GetKeyUp(KeyCode.LeftArrow))
             {
                 L_stop = true;
+                R_stop = false;
             }
 
             if (R_stop)
             {
                 moveSpeed -= acceleration * Time.deltaTime;
                 transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
+                if (movingL)
+                {
+                    moveSpeed = 0;
+                    movingL = false;
+                    movingR = false;
+                }
                 if (moveSpeed <= 0.5)
                 {
                     R_stop = false;
@@ -103,6 +115,12 @@ public class PlayerMove : MonoBehaviour
             {
                 moveSpeed -= acceleration * Time.deltaTime;
                 transform.Translate(Vector3.left * moveSpeed * Time.deltaTime);
+                if (movingR)
+                {
+                    moveSpeed = 0;
+                    movingL = false;
+                    movingR = false;
+                }
                 if (moveSpeed <= 0.5)
                 {
                     L_stop = false;
@@ -139,14 +157,7 @@ public class PlayerMove : MonoBehaviour
             audioSou.Play();
             Invoke("ChangeSc", 2f);
 
-        }
-        if (collision.gameObject.tag == "Platform")// 바닥초기화
-        {
-            Debug.Log("땅");
-            anime.SetBool("isJumping", false);
-            JumpYN = false;
-            Jumpint = 0;
-        }
+        }        
         if(collision.gameObject.tag=="IceBlock") //미끄러지기 MovePower보다 적게주면 더 미끄러짐
         {
             Debug.Log("아이스블럭");
